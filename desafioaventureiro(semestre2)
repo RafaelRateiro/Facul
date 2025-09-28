@@ -1,0 +1,149 @@
+Programa da aula 3,O que esse programa faz:
+
+Fila circular (5 peças fixas): sempre mantém a fila cheia com novas peças criadas automaticamente.
+
+Pilha (capacidade 3): guarda peças reservadas no esquema LIFO (último entra, primeiro sai).
+
+Menu interativo: o jogador pode jogar, reservar ou usar peça da pilha.
+
+Exibição clara: sempre mostra o estado da fila e da pilha após cada ação.
+
+Peças geradas automaticamente pela função gerarPeca() (I, O, T, L) com IDs únicos.
+
+
+
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define TAM_FILA 5   // tamanho fixo da fila
+#define TAM_PILHA 3  // capacidade máxima da pilha
+
+// Struct que representa uma peça do Tetris
+typedef struct {
+    char tipo;  // tipo da peça ('I', 'O', 'T', 'L')
+    int id;     // identificador único
+} Peca;
+
+// Variáveis globais para controle dos IDs das peças
+int contadorID = 0;
+
+// Função que gera uma peça aleatória
+Peca gerarPeca() {
+    Peca nova;
+    char tipos[] = {'I', 'O', 'T', 'L'};
+    nova.tipo = tipos[rand() % 4]; // sorteia entre I, O, T, L
+    nova.id = contadorID++;
+    return nova;
+}
+
+// Função para exibir o estado atual da fila e da pilha
+void exibirEstado(Peca fila[], int frente, int tras, int qtdFila, Peca pilha[], int topo) {
+    printf("\n=== Estado Atual ===\n");
+
+    // Exibe fila
+    printf("Fila de pecas\t");
+    int i, idx;
+    for (i = 0, idx = frente; i < qtdFila; i++) {
+        printf("[%c %d] ", fila[idx].tipo, fila[idx].id);
+        idx = (idx + 1) % TAM_FILA;
+    }
+    printf("\n");
+
+    // Exibe pilha
+    printf("Pilha de reserva\t(Topo -> Base): ");
+    for (i = topo; i >= 0; i--) {
+        printf("[%c %d] ", pilha[i].tipo, pilha[i].id);
+    }
+    if (topo == -1) printf("(vazia)");
+    printf("\n");
+}
+
+// Programa principal
+int main() {
+    srand(time(NULL));
+
+    // Estruturas de dados
+    Peca fila[TAM_FILA];
+    Peca pilha[TAM_PILHA];
+    int frente = 0, tras = 0, qtdFila = 0;
+    int topo = -1;
+
+    // Inicializa fila com peças
+    for (int i = 0; i < TAM_FILA; i++) {
+        fila[tras] = gerarPeca();
+        tras = (tras + 1) % TAM_FILA;
+        qtdFila++;
+    }
+
+    int opcao;
+    do {
+        exibirEstado(fila, frente, tras, qtdFila, pilha, topo);
+
+        printf("\nOpcoes de Acao:\n");
+        printf("1 - Jogar peca (remover da fila)\n");
+        printf("2 - Reservar peca (fila -> pilha)\n");
+        printf("3 - Usar peca reservada (remover da pilha)\n");
+        printf("0 - Sair\n");
+        printf("Opcao: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1: // Jogar peça
+                if (qtdFila > 0) {
+                    printf("\nJogando peca [%c %d]...\n", fila[frente].tipo, fila[frente].id);
+                    frente = (frente + 1) % TAM_FILA;
+                    qtdFila--;
+
+                    // Gerar nova peça e adicionar ao final da fila
+                    fila[tras] = gerarPeca();
+                    tras = (tras + 1) % TAM_FILA;
+                    qtdFila++;
+                } else {
+                    printf("\nFila vazia!\n");
+                }
+                break;
+
+            case 2: // Reservar peça
+                if (qtdFila > 0 && topo < TAM_PILHA - 1) {
+                    topo++;
+                    pilha[topo] = fila[frente];
+                    printf("\nReservando peca [%c %d]...\n", fila[frente].tipo, fila[frente].id);
+
+                    frente = (frente + 1) % TAM_FILA;
+                    qtdFila--;
+
+                    // Gerar nova peça na fila
+                    fila[tras] = gerarPeca();
+                    tras = (tras + 1) % TAM_FILA;
+                    qtdFila++;
+                } else if (topo >= TAM_PILHA - 1) {
+                    printf("\nPilha cheia! Nao eh possivel reservar mais pecas.\n");
+                } else {
+                    printf("\nFila vazia!\n");
+                }
+                break;
+
+            case 3: // Usar peça reservada
+                if (topo >= 0) {
+                    printf("\nUsando peca [%c %d] da reserva...\n", pilha[topo].tipo, pilha[topo].id);
+                    topo--;
+                } else {
+                    printf("\nPilha vazia! Nao ha pecas reservadas.\n");
+                }
+                break;
+
+            case 0:
+                printf("\nSaindo do jogo...\n");
+                break;
+
+            default:
+                printf("\nOpcao invalida! Tente novamente.\n");
+        }
+
+    } while (opcao != 0);
+
+    return 0;
+}
